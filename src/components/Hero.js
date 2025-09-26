@@ -155,7 +155,12 @@ const Hero = ({ activeProfile, isDark, currentProfile }) => {
               {/* Enhanced Buttons */}
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                 <button 
-                  onClick={() => document.getElementById('projects').scrollIntoView({ behavior: 'smooth' })}
+                  onClick={() => {
+                    const projectsSection = document.getElementById('work');
+                    if (projectsSection) {
+                      projectsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }}
                   className={`group relative px-12 py-5 rounded-2xl font-semibold text-lg transition-all duration-300 hover:scale-110 hover:-translate-y-1 shadow-2xl overflow-hidden ${
                     isDark 
                       ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:from-amber-400 hover:to-orange-400' 

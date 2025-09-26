@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import emailjs from '@emailjs/browser';
 
 const Contact = ({ isDark }) => {
   const [formData, setFormData] = useState({
@@ -6,6 +7,8 @@ const Contact = ({ isDark }) => {
     email: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   const handleChange = (e) => {
     setFormData({
@@ -14,10 +17,38 @@ const Contact = ({ isDark }) => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
+    setIsSubmitting(true);
+
+    try {
+      // EmailJS configuration
+      const serviceId = 'service_in3ljmg'; // Replace with your EmailJS service ID
+      const templateId = 'template_vhjisfz'; // Replace with your EmailJS template ID
+      const publicKey = 'TXO6KFaFI1LfbG-7q'; // Replace with your EmailJS public key
+
+      const templateParams = {
+        from_name: formData.name,
+        from_email: formData.email,
+        message: formData.message
+        // to_email: 'sourabhmp49@gmail.com'
+      };
+
+      await emailjs.send(serviceId, templateId, templateParams, publicKey);
+      
+      showNotification('Message sent successfully! I\'ll get back to you soon.', 'success');
+      setFormData({ name: '', email: '', message: '' });
+    } catch (error) {
+      console.error('Email sending failed:', error);
+      showNotification('Failed to send message. Please try again or contact me directly.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -204,17 +235,47 @@ const Contact = ({ isDark }) => {
 
               <button
                 type="submit"
-                className={`w-full py-3 px-6 rounded-lg font-medium transition-all duration-200 hover:scale-105 ${
+                disabled={isSubmitting}
+                className={`w-full py-3 px-6 rounded-lg font-medium transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
                   isDark 
                     ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                 }`}
               >
-                Send Message
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Sending...</span>
+                  </div>
+                ) : (
+                  'Send Message'
+                )}
               </button>
             </form>
           </div>
         </div>
+        
+        {/* Notification */}
+        {notification && (
+          <div className={`fixed top-24 right-6 px-6 py-4 rounded-lg shadow-lg z-50 transition-all duration-300 max-w-md ${
+            notification.type === 'success' 
+              ? 'bg-green-500 text-white' 
+              : 'bg-red-500 text-white'
+          }`}>
+            <div className="flex items-center space-x-2">
+              {notification.type === 'success' ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+              <span>{notification.message}</span>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -7,6 +7,10 @@ const Projects = ({ activeProfile, isDark, currentProfile }) => {
   const [likedProjects, setLikedProjects] = useState(new Set());
   const [savedProjects, setSavedProjects] = useState(new Set());
   const [notification, setNotification] = useState(null);
+  const [stats, setStats] = useState({});
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   
   const showNotification = (message, type = 'success') => {
     setNotification({ message, type });
@@ -14,61 +18,111 @@ const Projects = ({ activeProfile, isDark, currentProfile }) => {
   };
   const displayedProjects = showAll ? currentProfile.projects : currentProfile.projects.slice(0, 4);
   
-  // Initialize stats for each project
+  // Initialize stats from localStorage or start from 0
   React.useEffect(() => {
-    const initialStats = {};
-    currentProfile.projects.forEach((_, index) => {
-      initialStats[index] = {
-        likes: Math.floor(Math.random() * 500) + 50,
-        saves: Math.floor(Math.random() * 200) + 20,
-        views: Math.floor(Math.random() * 2000) + 200
-      };
-    });
-    setProjectStats(initialStats);
+    const savedStats = localStorage.getItem('projectStats');
+    const savedLiked = localStorage.getItem('likedProjects');
+    const savedSaved = localStorage.getItem('savedProjects');
+    
+    if (savedStats) {
+      setProjectStats(JSON.parse(savedStats));
+    } else {
+      const initialStats = {};
+      currentProfile.projects.forEach((_, index) => {
+        initialStats[index] = {
+          likes: 0,
+          saves: 0,
+          views: 0,
+          downloads: 0
+        };
+      });
+      setProjectStats(initialStats);
+    }
+    
+    if (savedLiked) {
+      setLikedProjects(new Set(JSON.parse(savedLiked)));
+    }
+    
+    if (savedSaved) {
+      setSavedProjects(new Set(JSON.parse(savedSaved)));
+    }
   }, [currentProfile.projects]);
   
   const handleLike = (index, e) => {
-    e.stopPropagation();
+    e?.stopPropagation();
+    
+    // Check if user already liked this project
+    if (likedProjects.has(index)) {
+      showNotification('You already liked this artwork!', 'info');
+      return;
+    }
+    
     const newLiked = new Set(likedProjects);
     const newStats = { ...projectStats };
     
-    if (likedProjects.has(index)) {
-      newLiked.delete(index);
-      newStats[index] = { ...newStats[index], likes: newStats[index].likes - 1 };
-      showNotification('Removed from likes', 'info');
-    } else {
-      newLiked.add(index);
-      newStats[index] = { ...newStats[index], likes: newStats[index].likes + 1 };
-      showNotification('Added to likes! ❤️');
-    }
+    newLiked.add(index);
+    newStats[index] = { ...newStats[index], likes: (newStats[index]?.likes || 0) + 1 };
+    showNotification('Liked! ❤️', 'success');
     
     setLikedProjects(newLiked);
     setProjectStats(newStats);
+    
+    // Save to localStorage
+    localStorage.setItem('likedProjects', JSON.stringify([...newLiked]));
+    localStorage.setItem('projectStats', JSON.stringify(newStats));
   };
   
   const handleSave = (index, e) => {
-    e.stopPropagation();
+    e?.stopPropagation();
     const newSaved = new Set(savedProjects);
     const newStats = { ...projectStats };
     
     if (savedProjects.has(index)) {
       newSaved.delete(index);
-      newStats[index] = { ...newStats[index], saves: newStats[index].saves - 1 };
+      newStats[index] = { ...newStats[index], saves: Math.max(0, (newStats[index]?.saves || 0) - 1) };
       showNotification('Removed from saved', 'info');
     } else {
       newSaved.add(index);
-      newStats[index] = { ...newStats[index], saves: newStats[index].saves + 1 };
-      showNotification('Saved successfully! 📌');
+      newStats[index] = { ...newStats[index], saves: (newStats[index]?.saves || 0) + 1 };
+      showNotification('Saved successfully! 📌', 'success');
     }
     
     setSavedProjects(newSaved);
     setProjectStats(newStats);
+    
+    // Save to localStorage
+    localStorage.setItem('savedProjects', JSON.stringify([...newSaved]));
+    localStorage.setItem('projectStats', JSON.stringify(newStats));
   };
   
   const handleView = (index) => {
     const newStats = { ...projectStats };
-    newStats[index] = { ...newStats[index], views: newStats[index].views + 1 };
+    newStats[index] = { ...newStats[index], views: (newStats[index]?.views || 0) + 1 };
     setProjectStats(newStats);
+    localStorage.setItem('projectStats', JSON.stringify(newStats));
+  };
+  
+  const handleDownload = (index, projectName) => {
+    const newStats = { ...projectStats };
+    newStats[index] = { ...newStats[index], downloads: (newStats[index]?.downloads || 0) + 1 };
+    setProjectStats(newStats);
+    localStorage.setItem('projectStats', JSON.stringify(newStats));
+    
+    // Simulate download (since actual images may not exist)
+    showNotification('Download started! 📥', 'success');
+    
+    // Optional: Create actual download if image exists
+    try {
+      const link = document.createElement('a');
+      link.href = `/artist-images/${projectName.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+      link.download = `${projectName.replace(/\s+/g, '_')}_artwork.jpg`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.log('Download simulation');
+    }
   };
   const projectIcons = {
     'Online Food Order Website': (
@@ -234,81 +288,212 @@ const Projects = ({ activeProfile, isDark, currentProfile }) => {
           </div>
         )}
         
-        {/* Project Modal */}
+        {/* Modern Artwork Modal */}
         {selectedProject && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className={`max-w-2xl w-full rounded-2xl overflow-hidden ${
-              isDark ? 'bg-gray-800' : 'bg-white'
-            }`}>
-              <div className="relative h-64">
-                <img 
-                  src={`/images/project-${currentProfile.projects.indexOf(selectedProject) + 1}.jpg`}
-                  alt={selectedProject.name}
-                  className="w-full h-full object-cover"
-                />
-                <button 
-                  onClick={() => setSelectedProject(null)}
-                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
-                >
-                  ×
-                </button>
-              </div>
-              <div className="p-6">
-                <h3 className={`text-2xl font-bold mb-4 ${
-                  isDark ? 'text-white' : 'text-black'
-                }`}>
-                  {selectedProject.name}
-                </h3>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {selectedProject.tech.split(', ').map((tech, index) => (
-                    <span key={index} className={`px-3 py-1 text-sm rounded-full ${
-                      isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      {tech}
-                    </span>
-                  ))}
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setSelectedProject(null)}>
+            <div className={`max-w-5xl w-full max-h-[95vh] rounded-3xl overflow-hidden shadow-2xl ${
+              isDark ? 'bg-gray-900' : 'bg-white'
+            }`} onClick={(e) => e.stopPropagation()}>
+              
+              {/* Header */}
+              <div className={`flex items-center justify-between p-6 border-b ${
+                isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50/50'
+              }`}>
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                    isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+                  }`}>
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className={`text-2xl font-bold ${
+                      isDark ? 'text-white' : 'text-black'
+                    }`}>{selectedProject.name}</h2>
+                    <p className={`text-sm ${
+                      isDark ? 'text-gray-400' : 'text-gray-600'
+                    }`}>Pencil Sketch Artwork</p>
+                  </div>
                 </div>
-                <p className={`text-base leading-relaxed mb-6 ${
-                  isDark ? 'text-gray-300' : 'text-gray-700'
+                
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLike(currentProfile.projects.indexOf(selectedProject), e);
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all hover:scale-105 ${
+                      likedProjects.has(currentProfile.projects.indexOf(selectedProject))
+                        ? 'bg-red-500 text-white'
+                        : isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <svg className="w-4 h-4" fill={likedProjects.has(currentProfile.projects.indexOf(selectedProject)) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <span className="text-sm font-medium">{projectStats[currentProfile.projects.indexOf(selectedProject)]?.likes || 0}</span>
+                  </button>
+                  
+                  <button 
+                    onClick={() => setSelectedProject(null)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                      isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              {/* Main Content */}
+              <div className="flex flex-col lg:flex-row h-[calc(95vh-120px)]">
+                {/* Image Section */}
+                <div className={`flex-1 relative bg-gradient-to-br ${
+                  isDark ? 'from-gray-800 to-gray-900' : 'from-gray-50 to-gray-100'
+                } flex items-center justify-center p-8`}>
+                  <img 
+                    src={`/artist-images/${selectedProject.name.toLowerCase().replace(/\s+/g, '-')}.jpg`}
+                    alt={selectedProject.name}
+                    className={`max-w-full max-h-full object-contain rounded-2xl shadow-2xl cursor-zoom-in transition-all duration-500 ${
+                      isZoomed ? 'scale-125 cursor-zoom-out' : 'scale-100 hover:scale-105'
+                    }`}
+                    onClick={() => setIsZoomed(!isZoomed)}
+                    onLoad={(e) => {
+                      setImageLoaded(true);
+                      setImageDimensions({
+                        width: e.target.naturalWidth,
+                        height: e.target.naturalHeight
+                      });
+                    }}
+                    onError={(e) => {
+                      e.target.src = '/artist-images/Krishna-image.jpg';
+                    }}
+                  />
+                  
+                  {/* Zoom Indicator */}
+                  <div className={`absolute bottom-4 right-4 px-3 py-2 rounded-full backdrop-blur-md text-sm font-medium ${
+                    isDark ? 'bg-black/50 text-white' : 'bg-white/50 text-black'
+                  }`}>
+                    {isZoomed ? 'Click to zoom out' : 'Click to zoom in'}
+                  </div>
+                </div>
+                
+                {/* Info Section */}
+                <div className={`lg:w-96 p-6 flex flex-col ${
+                  isDark ? 'bg-gray-800/30' : 'bg-gray-50/30'
                 }`}>
-                  {selectedProject.description}
-                </p>
-                <div className="flex gap-3">
-                  {activeProfile === 'developer' ? (
-                    <>
-                      <button className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors ${
+                  <div className="flex-1">
+                    <p className={`text-base leading-relaxed mb-6 ${
+                      isDark ? 'text-gray-300' : 'text-gray-700'
+                    }`}>{selectedProject.description}</p>
+                    
+                    {/* Medium Tags */}
+                    <div className="mb-6">
+                      <h4 className={`text-sm font-semibold mb-3 ${
+                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      }`}>Medium Used</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedProject.tech.split(', ').map((tech, index) => (
+                          <span key={index} className={`px-3 py-2 text-sm rounded-xl font-medium transition-all hover:scale-105 ${
+                            isDark ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                          }`}>
+                            {tech}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Stats */}
+                    <div className={`grid grid-cols-3 gap-4 p-4 rounded-2xl mb-6 ${
+                      isDark ? 'bg-gray-700/50' : 'bg-white/50'
+                    }`}>
+                      <div className="text-center">
+                        <div className={`text-2xl font-bold ${
+                          isDark ? 'text-white' : 'text-black'
+                        }`}>{projectStats[currentProfile.projects.indexOf(selectedProject)]?.views || 0}</div>
+                        <div className={`text-xs ${
+                          isDark ? 'text-gray-400' : 'text-gray-600'
+                        }`}>Views</div>
+                      </div>
+                      <div className="text-center">
+                        <div className={`text-2xl font-bold ${
+                          isDark ? 'text-white' : 'text-black'
+                        }`}>{projectStats[currentProfile.projects.indexOf(selectedProject)]?.likes || 0}</div>
+                        <div className={`text-xs ${
+                          isDark ? 'text-gray-400' : 'text-gray-600'
+                        }`}>Likes</div>
+                      </div>
+                      <div className="text-center">
+                        <div className={`text-2xl font-bold ${
+                          isDark ? 'text-white' : 'text-black'
+                        }`}>{projectStats[currentProfile.projects.indexOf(selectedProject)]?.saves || 0}</div>
+                        <div className={`text-xs ${
+                          isDark ? 'text-gray-400' : 'text-gray-600'
+                        }`}>Saves</div>
+                      </div>
+                    </div>
+                    
+                    {/* Downloads Counter */}
+                    <div className={`text-center p-3 rounded-xl mb-4 ${
+                      isDark ? 'bg-gray-700/30' : 'bg-white/30'
+                    }`}>
+                      <div className={`text-lg font-semibold ${
+                        isDark ? 'text-white' : 'text-black'
+                      }`}>{projectStats[currentProfile.projects.indexOf(selectedProject)]?.downloads || 0}</div>
+                      <div className={`text-xs ${
+                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      }`}>Downloads</div>
+                    </div>
+                  </div>
+                  
+                  {/* Action Buttons */}
+                  <div className="space-y-3">
+                    <button 
+                      onClick={() => {
+                        setSelectedProject(null);
+                        document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className={`w-full py-3 px-6 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg ${
                         isDark 
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
-                      }`}>
-                        Live Demo
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:from-amber-400 hover:to-orange-400' 
+                          : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500'
+                      }`}
+                    >
+                      Commission Similar Artwork
+                    </button>
+                    
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSave(currentProfile.projects.indexOf(selectedProject), e);
+                        }}
+                        className={`flex-1 py-2 px-4 rounded-lg font-medium border transition-all hover:scale-105 ${
+                          savedProjects.has(currentProfile.projects.indexOf(selectedProject))
+                            ? 'bg-red-500 text-white border-red-500'
+                            : isDark 
+                              ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                              : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {savedProjects.has(currentProfile.projects.indexOf(selectedProject)) ? 'Saved' : 'Save'}
                       </button>
-                      <button className={`flex-1 py-3 px-6 rounded-lg font-medium border transition-colors ${
-                        isDark 
-                          ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                          : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                      }`}>
-                        Source Code
+                      
+                      <button 
+                        onClick={() => handleDownload(currentProfile.projects.indexOf(selectedProject), selectedProject.name)}
+                        className={`flex-1 py-2 px-4 rounded-lg font-medium border transition-all hover:scale-105 ${
+                          isDark 
+                            ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                            : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        Download
                       </button>
-                    </>
-                  ) : (
-                    <>
-                      <button className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors ${
-                        isDark 
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
-                      }`}>
-                        View Details
-                      </button>
-                      <button className={`flex-1 py-3 px-6 rounded-lg font-medium border transition-colors ${
-                        isDark 
-                          ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                          : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                      }`}>
-                        Source Code
-                      </button>
-                    </>
-                  )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
