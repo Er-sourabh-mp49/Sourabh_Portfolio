@@ -4,7 +4,7 @@ const Order = ({ isDark }) => {
   const packages = [
     {
       name: "Basic",
-      price: "₹ 200",
+      price: "₹ 300",
       features: ["Single portrait", "A4 size", "2-3 days"],
       popular: false
     },

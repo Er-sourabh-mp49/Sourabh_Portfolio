@@ -196,7 +196,10 @@ const Projects = ({ activeProfile, isDark, currentProfile }) => {
               {/* Project Image */}
               <div className="relative overflow-hidden h-48">
                 <img 
-                  src={`/images/project-${index + 1}.jpg`}
+                  src={activeProfile === 'developer' 
+                    ? `/project-images/${project.name.toLowerCase().replace(/\s+/g, '-')}.jpg`
+                    : `/artist-images/${project.name.toLowerCase().replace(/\s+/g, '-')}.jpg`
+                  }
                   alt={project.name}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                   onError={(e) => {
@@ -208,11 +211,16 @@ const Projects = ({ activeProfile, isDark, currentProfile }) => {
                   isDark ? 'bg-gray-700' : 'bg-gray-100'
                 }`} style={{display: 'none'}}>
                   <div className={`p-4 rounded-xl ${
-                    isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                    activeProfile === 'developer'
+                      ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                      : isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
                   }`}>
                     {projectIcons[project.name] || (
                       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={activeProfile === 'developer' 
+                          ? "M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                          : "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                        } />
                       </svg>
                     )}
                   </div>
@@ -247,27 +255,84 @@ const Projects = ({ activeProfile, isDark, currentProfile }) => {
               </div>
               
               {/* Action Buttons */}
-              <div className="flex gap-3">
-                <button 
-                  onClick={() => {
-                    handleView(index);
-                    setSelectedProject(project);
-                  }}
-                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isDark ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
-                  }`}
-                >
-                  {activeProfile === 'artist' ? 'View Artwork' : 'View Project'}
-                </button>
-                <button 
-                  className={`p-2 rounded-lg transition-all duration-200 ${
-                    isDark ? 'border border-gray-600 text-gray-400 hover:bg-gray-700' : 'border border-gray-300 text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </button>
+              <div className="flex gap-2">
+                {activeProfile === 'developer' ? (
+                  <>
+                    <button 
+                      onClick={() => {
+                        const demoUrls = {
+                          'Online Food Order Website': 'https://food-order-demo.netlify.app',
+                          'Shifra AI Virtual Assistant': 'https://virtual-assistant-sv.netlify.app/',
+                          'Tic Tac Toe Game': 'https://tictactoe-game.netlify.app',
+                          'Weather App': 'https://weather-app-demo.netlify.app',
+                          'Task Manager': 'https://task-manager-demo.netlify.app',
+                          'Calculator App': 'https://calculator-app-demo.netlify.app'
+                        };
+                        const url = demoUrls[project.name] || '#';
+                        if (url !== '#') {
+                          window.open(url, '_blank');
+                          handleView(index);
+                        } else {
+                          showNotification('Demo coming soon!', 'info');
+                        }
+                      }}
+                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isDark ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
+                      }`}
+                    >
+                      Live Demo
+                    </button>
+                    <button 
+                      onClick={() => {
+                        const githubUrls = {
+                          'Online Food Order Website': 'https://github.com/Er-sourabh-mp49',
+                          'Shifra AI Virtual Assistant': 'https://github.com/Er-sourabh-mp49',
+                          'Tic Tac Toe Game': 'https://github.com/Er-sourabh-mp49',
+                          'Weather App': 'https://github.com/Er-sourabh-mp49',
+                          'Task Manager': 'https://github.com/Er-sourabh-mp49',
+                          'Calculator App': 'https://github.com/Er-sourabh-mp49'
+                        };
+                        const url = githubUrls[project.name] || '#';
+                        if (url !== '#') {
+                          window.open(url, '_blank');
+                        } else {
+                          showNotification('Repository coming soon!', 'info');
+                        }
+                      }}
+                      className={`p-2 rounded-lg transition-all duration-200 ${
+                        isDark ? 'border border-gray-600 text-gray-400 hover:bg-gray-700' : 'border border-gray-300 text-gray-600 hover:bg-gray-100'
+                      }`}
+                      title="View on GitHub"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                      </svg>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => {
+                        handleView(index);
+                        setSelectedProject(project);
+                      }}
+                      className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isDark ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
+                      }`}
+                    >
+                      View Artwork
+                    </button>
+                    <button 
+                      className={`p-2 rounded-lg transition-all duration-200 ${
+                        isDark ? 'border border-gray-600 text-gray-400 hover:bg-gray-700' : 'border border-gray-300 text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </button>
+                  </>
+                )}
               </div>
               </div>
             </div>
@@ -288,7 +353,7 @@ const Projects = ({ activeProfile, isDark, currentProfile }) => {
           </div>
         )}
         
-        {/* Modern Artwork Modal */}
+        {/* Project Modal */}
         {selectedProject && (
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setSelectedProject(null)}>
             <div className={`max-w-5xl w-full max-h-[95vh] rounded-3xl overflow-hidden shadow-2xl ${
@@ -301,11 +366,19 @@ const Projects = ({ activeProfile, isDark, currentProfile }) => {
               }`}>
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                    isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+                    activeProfile === 'developer' 
+                      ? isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                      : isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
                   }`}>
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
+                    {activeProfile === 'developer' ? (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
+                    ) : (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    )}
                   </div>
                   <div>
                     <h2 className={`text-2xl font-bold ${
@@ -313,27 +386,78 @@ const Projects = ({ activeProfile, isDark, currentProfile }) => {
                     }`}>{selectedProject.name}</h2>
                     <p className={`text-sm ${
                       isDark ? 'text-gray-400' : 'text-gray-600'
-                    }`}>Pencil Sketch Artwork</p>
+                    }`}>{activeProfile === 'developer' ? 'Web Application' : 'Pencil Sketch Artwork'}</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLike(currentProfile.projects.indexOf(selectedProject), e);
-                    }}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all hover:scale-105 ${
-                      likedProjects.has(currentProfile.projects.indexOf(selectedProject))
-                        ? 'bg-red-500 text-white'
-                        : isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <svg className="w-4 h-4" fill={likedProjects.has(currentProfile.projects.indexOf(selectedProject)) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                    <span className="text-sm font-medium">{projectStats[currentProfile.projects.indexOf(selectedProject)]?.likes || 0}</span>
-                  </button>
+                  {activeProfile === 'developer' ? (
+                    <>
+                      <button 
+                        onClick={() => {
+                          const demoUrls = {
+                            'Online Food Order Website': 'https://food-order-demo.netlify.app',
+                            'Shifra AI Virtual Assistant': 'https://virtual-assistant-sv.netlify.app/',
+                            'Tic Tac Toe Game': 'https://tictactoe-game.netlify.app',
+                            'Weather App': 'https://weather-app-demo.netlify.app',
+                            'Task Manager': 'https://task-manager-demo.netlify.app',
+                            'Calculator App': 'https://calculator-app-demo.netlify.app'
+                          };
+                          const url = demoUrls[selectedProject.name] || '#';
+                          if (url !== '#') {
+                            window.open(url, '_blank');
+                          } else {
+                            showNotification('Demo coming soon!', 'info');
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-lg font-medium transition-all hover:scale-105 ${
+                          isDark ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }`}
+                      >
+                        Live Demo
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const githubUrls = {
+                            'Online Food Order Website': 'https://github.com/sourabh/food-order-website',
+                            'Shifra AI Virtual Assistant': 'https://github.com/sourabh/shifra-ai',
+                            'Tic Tac Toe Game': 'https://github.com/sourabh/tic-tac-toe',
+                            'Weather App': 'https://github.com/sourabh/weather-app',
+                            'Task Manager': 'https://github.com/sourabh/task-manager',
+                            'Calculator App': 'https://github.com/sourabh/calculator-app'
+                          };
+                          const url = githubUrls[selectedProject.name] || '#';
+                          if (url !== '#') {
+                            window.open(url, '_blank');
+                          } else {
+                            showNotification('Repository coming soon!', 'info');
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-lg font-medium transition-all hover:scale-105 ${
+                          isDark ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-black'
+                        }`}
+                      >
+                        GitHub
+                      </button>
+                    </>
+                  ) : (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLike(currentProfile.projects.indexOf(selectedProject), e);
+                      }}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all hover:scale-105 ${
+                        likedProjects.has(currentProfile.projects.indexOf(selectedProject))
+                          ? 'bg-red-500 text-white'
+                          : isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      <svg className="w-4 h-4" fill={likedProjects.has(currentProfile.projects.indexOf(selectedProject)) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      </svg>
+                      <span className="text-sm font-medium">{projectStats[currentProfile.projects.indexOf(selectedProject)]?.likes || 0}</span>
+                    </button>
+                  )}
                   
                   <button 
                     onClick={() => setSelectedProject(null)}
@@ -350,35 +474,75 @@ const Projects = ({ activeProfile, isDark, currentProfile }) => {
               
               {/* Main Content */}
               <div className="flex flex-col lg:flex-row h-[calc(95vh-120px)]">
-                {/* Image Section */}
+                {/* Image/Preview Section */}
                 <div className={`flex-1 relative bg-gradient-to-br ${
                   isDark ? 'from-gray-800 to-gray-900' : 'from-gray-50 to-gray-100'
                 } flex items-center justify-center p-8`}>
-                  <img 
-                    src={`/artist-images/${selectedProject.name.toLowerCase().replace(/\s+/g, '-')}.jpg`}
-                    alt={selectedProject.name}
-                    className={`max-w-full max-h-full object-contain rounded-2xl shadow-2xl cursor-zoom-in transition-all duration-500 ${
-                      isZoomed ? 'scale-125 cursor-zoom-out' : 'scale-100 hover:scale-105'
-                    }`}
-                    onClick={() => setIsZoomed(!isZoomed)}
-                    onLoad={(e) => {
-                      setImageLoaded(true);
-                      setImageDimensions({
-                        width: e.target.naturalWidth,
-                        height: e.target.naturalHeight
-                      });
-                    }}
-                    onError={(e) => {
-                      e.target.src = '/artist-images/Krishna-image.jpg';
-                    }}
-                  />
-                  
-                  {/* Zoom Indicator */}
-                  <div className={`absolute bottom-4 right-4 px-3 py-2 rounded-full backdrop-blur-md text-sm font-medium ${
-                    isDark ? 'bg-black/50 text-white' : 'bg-white/50 text-black'
-                  }`}>
-                    {isZoomed ? 'Click to zoom out' : 'Click to zoom in'}
-                  </div>
+                  {activeProfile === 'developer' ? (
+                    <div className={`w-full h-full rounded-2xl shadow-2xl overflow-hidden ${
+                      isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+                    }`}>
+                      <div className={`h-8 flex items-center px-4 gap-2 ${
+                        isDark ? 'bg-gray-700' : 'bg-gray-100'
+                      }`}>
+                        <div className="flex gap-1">
+                          <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                          <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                        </div>
+                        <div className={`text-xs ${
+                          isDark ? 'text-gray-400' : 'text-gray-600'
+                        }`}>localhost:3000</div>
+                      </div>
+                      <div className="p-8 h-full flex items-center justify-center">
+                        <div className="text-center">
+                          <div className={`w-24 h-24 mx-auto mb-4 rounded-xl flex items-center justify-center ${
+                            isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                          }`}>
+                            {projectIcons[selectedProject.name] || (
+                              <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                              </svg>
+                            )}
+                          </div>
+                          <h3 className={`text-xl font-bold mb-2 ${
+                            isDark ? 'text-white' : 'text-black'
+                          }`}>{selectedProject.name}</h3>
+                          <p className={`text-sm mb-4 ${
+                            isDark ? 'text-gray-400' : 'text-gray-600'
+                          }`}>Click "Live Demo" to view the working application</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <img 
+                        src={`/artist-images/${selectedProject.name.toLowerCase().replace(/\s+/g, '-')}.jpg`}
+                        alt={selectedProject.name}
+                        className={`max-w-full max-h-full object-contain rounded-2xl shadow-2xl cursor-zoom-in transition-all duration-500 ${
+                          isZoomed ? 'scale-125 cursor-zoom-out' : 'scale-100 hover:scale-105'
+                        }`}
+                        onClick={() => setIsZoomed(!isZoomed)}
+                        onLoad={(e) => {
+                          setImageLoaded(true);
+                          setImageDimensions({
+                            width: e.target.naturalWidth,
+                            height: e.target.naturalHeight
+                          });
+                        }}
+                        onError={(e) => {
+                          e.target.src = '/artist-images/Krishna-image.jpg';
+                        }}
+                      />
+                      
+                      {/* Zoom Indicator */}
+                      <div className={`absolute bottom-4 right-4 px-3 py-2 rounded-full backdrop-blur-md text-sm font-medium ${
+                        isDark ? 'bg-black/50 text-white' : 'bg-white/50 text-black'
+                      }`}>
+                        {isZoomed ? 'Click to zoom out' : 'Click to zoom in'}
+                      </div>
+                    </>
+                  )}
                 </div>
                 
                 {/* Info Section */}
@@ -390,15 +554,17 @@ const Projects = ({ activeProfile, isDark, currentProfile }) => {
                       isDark ? 'text-gray-300' : 'text-gray-700'
                     }`}>{selectedProject.description}</p>
                     
-                    {/* Medium Tags */}
+                    {/* Tech Stack / Medium Tags */}
                     <div className="mb-6">
                       <h4 className={`text-sm font-semibold mb-3 ${
                         isDark ? 'text-gray-400' : 'text-gray-600'
-                      }`}>Medium Used</h4>
+                      }`}>{activeProfile === 'developer' ? 'Tech Stack' : 'Medium Used'}</h4>
                       <div className="flex flex-wrap gap-2">
                         {selectedProject.tech.split(', ').map((tech, index) => (
                           <span key={index} className={`px-3 py-2 text-sm rounded-xl font-medium transition-all hover:scale-105 ${
-                            isDark ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                            activeProfile === 'developer'
+                              ? isDark ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                              : isDark ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
                           }`}>
                             {tech}
                           </span>
@@ -451,48 +617,122 @@ const Projects = ({ activeProfile, isDark, currentProfile }) => {
                   
                   {/* Action Buttons */}
                   <div className="space-y-3">
-                    <button 
-                      onClick={() => {
-                        setSelectedProject(null);
-                        document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
-                      }}
-                      className={`w-full py-3 px-6 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg ${
-                        isDark 
-                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:from-amber-400 hover:to-orange-400' 
-                          : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500'
-                      }`}
-                    >
-                      Commission Similar Artwork
-                    </button>
-                    
-                    <div className="flex gap-3">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSave(currentProfile.projects.indexOf(selectedProject), e);
-                        }}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium border transition-all hover:scale-105 ${
-                          savedProjects.has(currentProfile.projects.indexOf(selectedProject))
-                            ? 'bg-red-500 text-white border-red-500'
-                            : isDark 
-                              ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                              : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        {savedProjects.has(currentProfile.projects.indexOf(selectedProject)) ? 'Saved' : 'Save'}
-                      </button>
-                      
-                      <button 
-                        onClick={() => handleDownload(currentProfile.projects.indexOf(selectedProject), selectedProject.name)}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium border transition-all hover:scale-105 ${
-                          isDark 
-                            ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                            : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        Download
-                      </button>
-                    </div>
+                    {activeProfile === 'developer' ? (
+                      <>
+                        <button 
+                          onClick={() => {
+                            setSelectedProject(null);
+                            document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className={`w-full py-3 px-6 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg ${
+                            isDark 
+                              ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-400 hover:to-purple-400' 
+                              : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-500 hover:to-purple-500'
+                          }`}
+                        >
+                          Hire Me for Similar Project
+                        </button>
+                        
+                        <div className="flex gap-3">
+                          <button 
+                            onClick={() => {
+                              const demoUrls = {
+                                'Online Food Order Website': 'https://food-order-demo.netlify.app',
+                                'Shifra AI Virtual Assistant': 'https://virtual-assistant-sv.netlify.app/',
+                                'Tic Tac Toe Game': 'https://tictactoe-game.netlify.app',
+                                'Weather App': 'https://weather-app-demo.netlify.app',
+                                'Task Manager': 'https://task-manager-demo.netlify.app',
+                                'Calculator App': 'https://calculator-app-demo.netlify.app'
+                              };
+                              const url = demoUrls[selectedProject.name] || '#';
+                              if (url !== '#') {
+                                window.open(url, '_blank');
+                              } else {
+                                showNotification('Demo coming soon!', 'info');
+                              }
+                            }}
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium border transition-all hover:scale-105 ${
+                              isDark 
+                                ? 'border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white' 
+                                : 'border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white'
+                            }`}
+                          >
+                            Live Demo
+                          </button>
+                          
+                          <button 
+                            onClick={() => {
+                              const githubUrls = {
+                                'Online Food Order Website': 'https://github.com/Er-sourabh-mp49',
+                                'Shifra AI Virtual Assistant': 'https://github.com/Er-sourabh-mp49',
+                                'Tic Tac Toe Game': 'https://github.com/Er-sourabh-mp49',
+                                'Weather App': 'https://github.com/Er-sourabh-mp49',
+                                'Task Manager': 'https://github.com/Er-sourabh-mp49',
+                                'Calculator App': 'https://github.com/Er-sourabh-mp49'
+                              };
+                              const url = githubUrls[selectedProject.name] || '#';
+                              if (url !== '#') {
+                                window.open(url, '_blank');
+                              } else {
+                                showNotification('Repository coming soon!', 'info');
+                              }
+                            }}
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium border transition-all hover:scale-105 ${
+                              isDark 
+                                ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            GitHub
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <button 
+                          onClick={() => {
+                            setSelectedProject(null);
+                            document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className={`w-full py-3 px-6 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg ${
+                            isDark 
+                              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:from-amber-400 hover:to-orange-400' 
+                              : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-500 hover:to-orange-500'
+                          }`}
+                        >
+                          Commission Similar Artwork
+                        </button>
+                        
+                        <div className="flex gap-3">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSave(currentProfile.projects.indexOf(selectedProject), e);
+                            }}
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium border transition-all hover:scale-105 ${
+                              savedProjects.has(currentProfile.projects.indexOf(selectedProject))
+                                ? 'bg-red-500 text-white border-red-500'
+                                : isDark 
+                                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                                  : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            {savedProjects.has(currentProfile.projects.indexOf(selectedProject)) ? 'Saved' : 'Save'}
+                          </button>
+                          
+                          <button 
+                            onClick={() => handleDownload(currentProfile.projects.indexOf(selectedProject), selectedProject.name)}
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium border transition-all hover:scale-105 ${
+                              isDark 
+                                ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                            }`}
+                          >
+                            Download
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
